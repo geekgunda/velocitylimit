@@ -1,3 +1,6 @@
+
+## Problem
+
 In finance, it's common for accounts to have so-called "velocity limits". In this task, you'll write a program that accepts or declines attempts to load funds into customers' accounts in real-time.
 
 Each attempt to load funds will come as a single-line JSON payload, structured as follows:
@@ -32,3 +35,38 @@ Your program should process lines from `input.txt` and return output in the form
 You're welcome to write your program in a general-purpose language of your choosing, but as we use Go on the back-end and TypeScript on the front-end, we do have a preference towards solutions written in Go (back-end) and TypeScript (front-end).
 
 We value well-structured, self-documenting code with sensible test coverage. Descriptive function and variable names are appreciated, as is isolating your business logic from the rest of your code.
+
+## Solution
+This app solves the problem statement above.  
+
+Usage: `make all`
+
+Assumption: 
+- Go is installed and setup already
+- Code is checked out, inside `$GOPATH`, with proper directory structure (`$GOPATH/src/github.com/geekgunda`)
+
+Configuration:  
+By default, the app takes `input.txt` file to read the transactions.  
+Output is recorded in a time-stamp appended `output-<timestamp>.txt` file in the same folder.  
+These values can be changed inside `cmd/app/main.go`
+
+
+### Design:  
+
+`velocitylimit` package: Holds the business logic.  
+`cmd/app/` package: Holds the main.go file, that triggers the app.
+
+`Process()` function acts as a driver.  
+It reads the input file line by line and records the response in output file in the same order.  
+Responses for duplicate transactions are omitted (as they aren't processed)
+
+The state is maintained in memory via a map with mutex lock.  
+For the input size of 1000 transactions, an external DB wasn't necessary.  
+But the app is written with a model (`store.go`), such that adding a DB should have minimal changes.  
+
+Due to the restriction on output formatting, it was difficult to come up with a concurrent solution.  
+Possible ways to do that (assuming the output restrictions aren't in place):  
+1. Change this into a API service, that can be called concurrently.
+2. Update Process function to spawn a new go channel per account, and a go routine listening on this channel. This way, requests for an account can be serialized, while concurrently processing requests at an app or service level
+
+
